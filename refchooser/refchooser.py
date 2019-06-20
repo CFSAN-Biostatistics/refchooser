@@ -116,7 +116,8 @@ def distance_matrix(sketches, output_path):
 
 
 def choose_by_distance(sketches, top_n):
-    """Choose an assembly from a collection with minimum number of contigs.
+    """Print the list of assemblies having the smallest mash distance to other assemblies
+    in a list of assemblies.
 
     Parameters
     ----------
@@ -133,9 +134,11 @@ def choose_by_distance(sketches, top_n):
     if len(df) == 0:
         return
 
-    distance_ave = df.sum() / len(df)
+    distance_ave = df.mean()
     distance_ave_sorted = distance_ave.sort_values()
-    print(distance_ave_sorted[0: top_n].to_string())
+    distance_ave_sorted_top = distance_ave_sorted[0: top_n]
+    df = pd.DataFrame({"Assembly": distance_ave_sorted_top.index, "Mean_Distance": distance_ave_sorted_top})
+    print(df.to_string(index=False))
 
 
 def choose_by_contigs(assemblies, top_n):

@@ -156,10 +156,12 @@ def test_choose_by_distance_should_be_0(tmpdir, capsys):
     refchooser.choose_by_distance(sketch_dir, 2)
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
-    match0 = r"fasta1\s+0.0"
-    match1 = r"fasta2\s+0.0"
+    match0 = r"Assembly\s+Mean_Distance"
+    match1 = r"\s+fasta1\s+0.0"
+    match2 = r"\s+fasta2\s+0.0"
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
+    assert re.match(match2, lines[2])
 
 
 def test_choose_by_distance_should_be_large(tmpdir, capsys):
@@ -178,14 +180,16 @@ def test_choose_by_distance_should_be_large(tmpdir, capsys):
     refchooser.choose_by_distance(sketch_dir, 10)
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
-    match0 = r"fasta1\s+0.75"  # distances are 0,1,1,1
-    match1 = r"fasta2\s+0.75"  # distances are 1,0,1,1
-    match2 = r"fasta3\s+0.75"  # distances are 1,1,0,1
-    match3 = r"fasta4\s+0.75"  # distances are 1,1,1,0
+    match0 = r"Assembly\s+Mean_Distance"
+    match1 = r"\s+fasta1\s+0.75"  # distances are 0,1,1,1
+    match2 = r"\s+fasta2\s+0.75"  # distances are 1,0,1,1
+    match3 = r"\s+fasta3\s+0.75"  # distances are 1,1,0,1
+    match4 = r"\s+fasta4\s+0.75"  # distances are 1,1,1,0
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
     assert re.match(match3, lines[3])
+    assert re.match(match4, lines[4])
 
 
 def test_choose_by_contigs(tmpdir, capsys):
