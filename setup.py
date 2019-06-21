@@ -26,7 +26,7 @@ test_requirements = [
 setup(
     name='refchooser',
     version='0.1.0',
-    description="Chooses an assembly from a list with minimum distance to all others.",
+    description="Tools to help choosing a reference assembly.",
     long_description=readme + '\n\n' + history,
     author="Steve Davis",
     author_email='steven.davis@fda.hhs.gov',
@@ -42,8 +42,9 @@ setup(
     zip_safe=False,
     keywords=['bioinformatics', 'NGS', 'refchooser'],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
@@ -52,6 +53,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     entry_points={'console_scripts': ['refchooser = refchooser.cli:main']},
     setup_requires=["pytest-runner"],
