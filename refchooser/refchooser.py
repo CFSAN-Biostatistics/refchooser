@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from Bio import SeqIO
 import gzip
 import logging
+import numpy as np
 import os
 import pandas as pd
 import tempfile
@@ -17,7 +18,7 @@ from refchooser import command
 from refchooser import utils
 
 
-def sketch(assemblies, sketch_dir, sketch_size, threads):
+def sketch(assemblies, sketch_dir, sketch_size, threads=1):
     """Create mash sketches to improve the speed of subsequent mash distance calculations.
 
     Parameters
@@ -28,7 +29,7 @@ def sketch(assemblies, sketch_dir, sketch_size, threads):
         Directory where sketches will be stored.
     sketch_size : int
         Each sketch will have at most this many non-redundant min-hashes.
-    threads : int
+    threads : int, optional, defaults to 1
         Number of CPU threads to use.
     """
     if not utils.which("mash"):
@@ -51,13 +52,15 @@ def sketch(assemblies, sketch_dir, sketch_size, threads):
         command.run(command_line)
 
 
-def get_distance_matrix(sketches):
+def get_distance_matrix(sketches, threads=1):
     """Construct a matrix of mash distances between all pairs of assemblies.
 
     Parameters
     ----------
     sketches : str
         Directory containing sketches, or a file containing paths to sketches.
+    threads : int, optional, defaults to 1
+        Number of CPU threads to use.
 
     Returns
     -------
@@ -72,6 +75,8 @@ def get_distance_matrix(sketches):
     if len(paths) == 0:
         return
 
+    assembly_names = [utils.basename_no_ext(sketch_path) for sketch_path in paths]
+
     # Create a file of sketch paths
     with tempfile.NamedTemporaryFile(mode="w") as f_sketches:
         sketch_paths_filename = f_sketches.name
@@ -79,25 +84,32 @@ def get_distance_matrix(sketches):
             print(sketch_path, file=f_sketches)
         f_sketches.flush()
 
-        # For each sketch, find the distance to all others
-        df_all = pd.DataFrame()
-        for sketch_path in paths:
-            with tempfile.NamedTemporaryFile() as f_dist:
-                dist_filename = f_dist.name
-                command_line = "mash dist %s -l %s" % (sketch_path, sketch_paths_filename)
-                command.run(command_line, dist_filename)
-                df_single = pd.read_csv(dist_filename, sep=None, header=None, usecols=[2], names=["distance"], engine="python")
-                assembly_name = utils.basename_no_ext(sketch_path)
-                df_all[assembly_name] = df_single["distance"]
+        # Prepare the lower triangle distances
+        with tempfile.NamedTemporaryFile() as f_triangle_output:
+            triangle_filename = f_triangle_output.name
+            command_line = "mash triangle -p %d -l %s" % (threads, sketch_paths_filename)
+            command.run(command_line, triangle_filename)
 
-        # Change index from integer index to corresponding assembly name
-        assembly_index = {i: utils.basename_no_ext(sketch_path) for i, sketch_path in enumerate(paths)}
-        df_all.rename(assembly_index, inplace=True)
+            # Read the triangle, convert to square matrix
+            with open(triangle_filename) as f_triangle_input:
+                dim = len(assembly_names)
+                a = np.zeros((dim, dim))
+                f_triangle_input.readline()  # skip 1st line
+                f_triangle_input.readline()  # skip 2nd line
+                idx = 1
+                for line in f_triangle_input:
+                    tokens = line.split()
+                    distances = [float(token) for token in tokens[1:]]  # first token is assembly name
+                    a[idx, 0: len(distances)] = distances  # partial row
+                    a[0: len(distances), idx] = distances  # partial column
+                    idx += 1
 
-        return df_all
+    df = pd.DataFrame(a, index=assembly_names, columns=assembly_names)
+
+    return df
 
 
-def distance_matrix(sketches, output_path):
+def distance_matrix(sketches, output_path, threads=1):
     """Print a matrix of mash distances between all pairs of assemblies and write to a file.
 
     Parameters
@@ -106,16 +118,18 @@ def distance_matrix(sketches, output_path):
         Directory containing sketches, or a file containing paths to sketches.
     output_path : str
         Path to tab-separated output file.
+    threads : int, optional, defaults to 1
+        Number of CPU threads to use.
     """
     if not utils.which("mash"):
         logging.error("Unable to find mash on the path.")
         return
 
-    df = get_distance_matrix(sketches)
+    df = get_distance_matrix(sketches, threads)
     df.to_csv(output_path, sep="\t")
 
 
-def choose_by_distance(sketches, top_n):
+def choose_by_distance(sketches, top_n, threads=1):
     """Print the list of assemblies having the smallest mash distance to other assemblies
     in a list of assemblies.
 
@@ -125,12 +139,14 @@ def choose_by_distance(sketches, top_n):
         Directory containing sketches, or a file containing paths to sketches.
     top_n : int
         Print the best n candidate references.
+    threads : int, optional, defaults to 1
+        Number of CPU threads to use.
     """
     if not utils.which("mash"):
         logging.error("Unable to find mash on the path.")
         return
 
-    df = get_distance_matrix(sketches)
+    df = get_distance_matrix(sketches, threads)
     if len(df) == 0:
         return
 

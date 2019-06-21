@@ -101,7 +101,7 @@ def test_sketch(tmpdir):
     sketch_dir = str(tmpdir.mkdir("sketchdir"))
     path1, _ = write_random_dna_fasta(fasta_dir, "fasta1.fasta", 10000)
     path2, _ = write_random_dna_fasta(fasta_dir, "fasta2.fasta", 10000)
-    refchooser.sketch(fasta_dir, sketch_dir, 1000, 1)
+    refchooser.sketch(fasta_dir, sketch_dir, 1000)
     sketches = os.listdir(sketch_dir)
     assert "fasta1.msh" in sketches
     assert "fasta2.msh" in sketches
@@ -115,7 +115,7 @@ def test_get_distance_matrix(tmpdir, capsys):
     dna2 = 'C' * 100
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000, 1)
+    refchooser.sketch(fasta_dir, sketch_dir, 1000)
     df = refchooser.get_distance_matrix(sketch_dir)
     assert df.loc["fasta1", "fasta1"] == 0
     assert df.loc["fasta1", "fasta2"] == 1
@@ -130,18 +130,22 @@ def test_distance_matrix(tmpdir, capsys):
     matrix_path = str(tmpdir.join("matrix.tsv"))
     dna1 = 'A' * 100
     dna2 = 'C' * 100
+    dna3 = 'TG' * 50
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000, 1)
+    write_fasta([dna3], fasta_dir, "fasta3.fasta")
+    refchooser.sketch(fasta_dir, sketch_dir, 1000)
     refchooser.distance_matrix(sketch_dir, matrix_path)
     with open(matrix_path) as f:
         lines = f.read().split('\n')
-    match0 = r"\s+fasta1\sfasta2"
-    match1 = r"fasta1\s+0\s+1"
-    match2 = r"fasta2\s+1\s+0"
+    match0 = r"\s+fasta1\sfasta2\sfasta3"
+    match1 = r"fasta1\s+0.0\s+1.0\s+1.0"
+    match2 = r"fasta2\s+1.0\s+0.0\s+1.0"
+    match3 = r"fasta3\s+1.0\s+1.0\s+0.0"
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
+    assert re.match(match3, lines[3])
 
 
 def test_choose_by_distance_should_be_0(tmpdir, capsys):
@@ -152,7 +156,7 @@ def test_choose_by_distance_should_be_0(tmpdir, capsys):
     dna2 = 'A' * 1000
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000, 1)
+    refchooser.sketch(fasta_dir, sketch_dir, 1000)
     refchooser.choose_by_distance(sketch_dir, 2)
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
@@ -176,7 +180,7 @@ def test_choose_by_distance_should_be_large(tmpdir, capsys):
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
     write_fasta([dna3], fasta_dir, "fasta3.fasta")
     write_fasta([dna4], fasta_dir, "fasta4.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000, 1)
+    refchooser.sketch(fasta_dir, sketch_dir, 1000)
     refchooser.choose_by_distance(sketch_dir, 10)
     captured = capsys.readouterr()
     lines = captured.out.split('\n')

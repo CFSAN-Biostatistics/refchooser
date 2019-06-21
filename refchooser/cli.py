@@ -67,15 +67,17 @@ def parse_arguments(system_args):
     help_str = "Choose an assembly from a collection with minimum mash distance to all others."
     description = help_str + " You must create sketches of the assemblies before running this command."
     subparser = subparsers.add_parser("distance", formatter_class=formatter_class, description=description, help=help_str)
-    subparser.add_argument(           dest="sketches",      type=str,              metavar="SKETCHES",               help="Directory containing sketches, or a file containing paths to sketches.")
-    subparser.add_argument("--top",   dest="top_n",         type=positive_int,     metavar="TOP-N",      default=10, help="Print the best n candidate references.")
+    subparser.add_argument(             dest="sketches",      type=str,              metavar="SKETCHES",               help="Directory containing sketches, or a file containing paths to sketches.")
+    subparser.add_argument("--top",     dest="top_n",         type=positive_int,     metavar="TOP-N",      default=10, help="Print the best n candidate references.")
+    subparser.add_argument("--threads", dest="threads",       type=positive_int,     metavar="INT",         default=1, help="Number of CPU threads to use.")
     subparser.set_defaults(func=distance_command)
 
     help_str = "Print a matrix of mash distances between all pairs of assemblies and write to a file."
     description = help_str + " You must create sketches of the assemblies before running this command."
     subparser = subparsers.add_parser("matrix", formatter_class=formatter_class, description=description, help=help_str)
-    subparser.add_argument(           dest="sketches",      type=str,              metavar="SKETCHES",               help="Directory containing sketches, or a file containing paths to sketches.")
-    subparser.add_argument(           dest="output_path",   type=str,              metavar="OUTPUT",                 help="Path to tab-separated output file.")
+    subparser.add_argument(             dest="sketches",      type=str,              metavar="SKETCHES",               help="Directory containing sketches, or a file containing paths to sketches.")
+    subparser.add_argument(             dest="output_path",   type=str,              metavar="OUTPUT",                 help="Path to tab-separated output file.")
+    subparser.add_argument("--threads", dest="threads",       type=positive_int,     metavar="INT",         default=1, help="Number of CPU threads to use.")
     subparser.set_defaults(func=matrix_command)
 
     help_str = "Choose an assembly from a collection with minimum number of contigs."
@@ -110,7 +112,7 @@ def distance_command(args):
         Command line arguments stored as attributes of a Namespace, usually
         parsed from sys.argv
     """
-    refchooser.choose_by_distance(args.sketches, args.top_n)
+    refchooser.choose_by_distance(args.sketches, args.top_n, args.threads)
 
 
 def matrix_command(args):
@@ -122,7 +124,7 @@ def matrix_command(args):
         Command line arguments stored as attributes of a Namespace, usually
         parsed from sys.argv
     """
-    refchooser.distance_matrix(args.sketches, args.output_path)
+    refchooser.distance_matrix(args.sketches, args.output_path, args.threads)
 
 
 def contigs_command(args):
