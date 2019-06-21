@@ -50,9 +50,6 @@ coverage:
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/refchooser.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ refchooser
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	xdg-open docs/_build/html/index.html

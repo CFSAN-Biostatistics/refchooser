@@ -28,6 +28,9 @@ pip-log.txt
 nosetests.xml
 htmlcov
 
+# Monkey testing
+testing
+
 # Translations
 *.mo
 

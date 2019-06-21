@@ -4,13 +4,21 @@ Installation
 
 .. highlight:: bash
 
+
+Executable Software Dependencies
+---------------------------------
+
+You should install ``Mash`` before installing refchooser.
+
+https://github.com/marbl/Mash/releases
+
+
+Installing refchooser
+---------------------
+
 At the command line::
 
     $ pip install --user refchooser
-
-Update your .bashrc file with the path to user-installed python packages::
-
-    export PATH=~/.local/bin:$PATH
 
 Or, if you have virtualenvwrapper installed::
 

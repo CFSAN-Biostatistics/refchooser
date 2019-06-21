@@ -27,7 +27,8 @@ and Drug Administration, Center for Food Safety and Applied Nutrition.
 Features
 --------
 
-* TODO: Insert a bulleted list of features here
+* Print list of assemblies sorted by average Mash distance to all other assemblies.
+* Print list of assemblies sorted by number of contigs.
 
 
 Citing refchooser

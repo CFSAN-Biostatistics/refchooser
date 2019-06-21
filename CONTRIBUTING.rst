@@ -88,9 +88,7 @@ Ready to contribute? Here's how to set up `refchooser` for local development.
 
 6. Update the documentation and review the changes locally with sphinx::
 
-    $ cd docs
-    $ sphinx-build -b html . ./_build
-    $ xdg-open _build/index.html
+    $ make docs
 
 7. Commit your changes and push your branch to GitHub::
 
