@@ -27,8 +27,12 @@ and Drug Administration, Center for Food Safety and Applied Nutrition.
 Features
 --------
 
-* Print list of assemblies sorted by average Mash distance to all other assemblies.
-* Print list of assemblies sorted by number of contigs.
+* Print a table of metrics to help choose an assembly from a collection.
+* N50
+* N90
+* Number of contigs
+* Assembly length
+* Mean mash distance to all other assemblies
 
 
 Citing refchooser

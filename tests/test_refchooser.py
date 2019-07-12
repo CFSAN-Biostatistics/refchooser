@@ -15,6 +15,7 @@ import random
 import re
 
 from refchooser import refchooser
+from refchooser import utils
 
 
 def make_random_dna_string(length, allowed_bases):
@@ -115,8 +116,9 @@ def test_get_distance_matrix(tmpdir, capsys):
     dna2 = 'C' * 100
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000)
-    df = refchooser.get_distance_matrix(sketch_dir)
+    fasta_paths = utils.get_file_list(fasta_dir)
+    sketch_size = 1000
+    df = refchooser.get_distance_matrix(fasta_paths, sketch_dir, sketch_size)
     assert df.loc["fasta1", "fasta1"] == 0
     assert df.loc["fasta1", "fasta2"] == 1
     assert df.loc["fasta2", "fasta1"] == 1
@@ -134,8 +136,8 @@ def test_distance_matrix(tmpdir, capsys):
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
     write_fasta([dna3], fasta_dir, "fasta3.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000)
-    refchooser.distance_matrix(sketch_dir, matrix_path)
+    sketch_size = 1000
+    refchooser.distance_matrix(fasta_dir, sketch_dir, sketch_size, matrix_path)
     with open(matrix_path) as f:
         lines = f.read().split('\n')
     match0 = r"\s+fasta1\sfasta2\sfasta3"
@@ -148,27 +150,28 @@ def test_distance_matrix(tmpdir, capsys):
     assert re.match(match3, lines[3])
 
 
-def test_choose_by_distance_should_be_0(tmpdir, capsys):
-    """Verify zero distance when identical."""
+def test_metrics_distance_should_be_0(tmpdir, capsys):
+    """Verify zero distance when sequences are identical."""
     fasta_dir = str(tmpdir.mkdir("fastadir"))
     sketch_dir = str(tmpdir.mkdir("sketchdir"))
     dna1 = 'A' * 1000
     dna2 = 'A' * 1000
     write_fasta([dna1], fasta_dir, "fasta1.fasta")
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000)
-    refchooser.choose_by_distance(sketch_dir, 2)
+    sketch_size = 1000
+    top_n = 2
+    refchooser.metrics(fasta_dir, sketch_dir, sketch_size, top_n, sort_by="Assembly")
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
-    match0 = r"Assembly\s+Mean_Distance"
-    match1 = r"\s+fasta1\s+0.0"
-    match2 = r"\s+fasta2\s+0.0"
+    match0 = r"Assembly\s+N50\s+N90\s+Contigs\s+Length\s+Mean_Distance\s+Path\s+Score"
+    match1 = r"fasta1\s+1000\s+1000\s+1\s+1000\s+0.0"
+    match2 = r"fasta2\s+1000\s+1000\s+1\s+1000\s+0.0"
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
 
 
-def test_choose_by_distance_should_be_large(tmpdir, capsys):
+def test_metrics_distance_should_be_large(tmpdir, capsys):
     """Verify large distance when no kmers shared."""
     fasta_dir = str(tmpdir.mkdir("fastadir"))
     sketch_dir = str(tmpdir.mkdir("sketchdir"))
@@ -180,15 +183,16 @@ def test_choose_by_distance_should_be_large(tmpdir, capsys):
     write_fasta([dna2], fasta_dir, "fasta2.fasta")
     write_fasta([dna3], fasta_dir, "fasta3.fasta")
     write_fasta([dna4], fasta_dir, "fasta4.fasta")
-    refchooser.sketch(fasta_dir, sketch_dir, 1000)
-    refchooser.choose_by_distance(sketch_dir, 10)
+    sketch_size = 1000
+    top_n = 10
+    refchooser.metrics(fasta_dir, sketch_dir, sketch_size, top_n, sort_by="Assembly")
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
-    match0 = r"Assembly\s+Mean_Distance"
-    match1 = r"\s+fasta1\s+0.75"  # distances are 0,1,1,1
-    match2 = r"\s+fasta2\s+0.75"  # distances are 1,0,1,1
-    match3 = r"\s+fasta3\s+0.75"  # distances are 1,1,0,1
-    match4 = r"\s+fasta4\s+0.75"  # distances are 1,1,1,0
+    match0 = r"Assembly\s+N50\s+N90\s+Contigs\s+Length\s+Mean_Distance\s+Path\s+Score"
+    match1 = r"fasta1\s+800\s+800\s+1\s+800\s+1.0"  # distances are 0,1,1,1
+    match2 = r"fasta2\s+800\s+800\s+1\s+800\s+1.0"  # distances are 1,0,1,1
+    match3 = r"fasta3\s+800\s+800\s+1\s+800\s+1.0"  # distances are 1,1,0,1
+    match4 = r"fasta4\s+800\s+800\s+1\s+800\s+1.0"  # distances are 1,1,1,0
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
@@ -196,19 +200,22 @@ def test_choose_by_distance_should_be_large(tmpdir, capsys):
     assert re.match(match4, lines[4])
 
 
-def test_choose_by_contigs(tmpdir, capsys):
-    """Verify choose_by_contigs prints expected value."""
-    directory = str(tmpdir)
-    seq_strings = ["A", "CC", "GGG", "TTTT"]
-    write_fasta(seq_strings, directory, "file1.fasta")
-    seq_strings = ["A", "CC", "GGG", "TTTT", "A", "CC", "GGG", "TTTT"]
-    write_fasta(seq_strings, directory, "file2.fasta")
-    refchooser.choose_by_contigs(directory, 10)
+def test_metrics(tmpdir, capsys):
+    """Verify expected N50, N90, contigs, length values."""
+    fasta_dir = str(tmpdir.mkdir("fastadir"))
+    sketch_dir = str(tmpdir.mkdir("sketchdir"))
+    seq_strings1 = ["A" * 50, "C" * 100, "G" * 150, "T" * 200]
+    seq_strings2 = ["A" * 50, "C" * 100, "G" * 150, "T" * 200, "A" * 50, "C" * 100, "G" * 150, "T" * 200]
+    write_fasta(seq_strings1, fasta_dir, "file1.fasta")
+    write_fasta(seq_strings2, fasta_dir, "file2.fasta")
+    sketch_size = 1000
+    top_n = 10
+    refchooser.metrics(fasta_dir, sketch_dir, sketch_size, top_n, sort_by="Assembly")
     captured = capsys.readouterr()
     lines = captured.out.split('\n')
-    match0 = r"\s*Assembly\s+Contigs\s+Size"
-    match1 = r".*file1.fasta\s+4\s+10"
-    match2 = r".*file2.fasta\s+8\s+20"
+    match0 = r"Assembly\s+N50\s+N90\s+Contigs\s+Length\s+Mean_Distance\s+Path\s+Score"
+    match1 = r"file1\s+150\s+100\s+4\s+500"
+    match2 = r"file2\s+150\s+100\s+8\s+1000"
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
