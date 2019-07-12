@@ -21,7 +21,7 @@ requirements = [
 ]
 
 test_requirements = [
-    "pytest",
+    "pytest < 5",
 ]
 
 setup(
