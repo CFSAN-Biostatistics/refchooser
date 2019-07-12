@@ -154,6 +154,8 @@ def get_file_list(container):
                 if line.startswith('#'):
                     continue
                 glob_paths = glob.glob(line)
+                if len(glob_paths) == 0:
+                    logging.warning("No assembly found at %s" % line)
                 for path in glob_paths:
                     paths.append(path)
         return sorted(paths)
