@@ -158,7 +158,7 @@ def get_file_list(container):
                     logging.warning("No assembly found at %s" % line)
                 for path in glob_paths:
                     paths.append(path)
-        return sorted(paths)
+        return sorted(set(paths))
 
     if os.path.isdir(container):
         paths = os.listdir(container)
