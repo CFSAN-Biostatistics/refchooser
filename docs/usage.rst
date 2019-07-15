@@ -22,7 +22,7 @@ which is the N50/Distance ratio.
 To print the table of assemblies sorted by N50::
 
     # Choose the top 10 from a collection of 900 assemblies
-    refchooser metrics --sort N50 --top 10 assembly_paths.txt sketches
+    refchooser metrics --sort N50 --top 10 assembly_paths.txt sketch_directory
 
     Assembly   N50    N90    Contigs Length  Mean_Distance Path                    Score
     SRR5868281 791291 119061 30      4845891 7.045173e-04  fasta/SRR5868281.fasta  1.123168e+09
@@ -40,7 +40,7 @@ To print the table of assemblies sorted by N50::
 To print the table of assemblies sorted by mean mash distance::
 
     # Choose the top 10 from a collection of 900 assemblies
-    refchooser metrics --sort Mean_Distance --top 10 assembly_paths.txt sketches
+    refchooser metrics --sort Mean_Distance --top 10 assembly_paths.txt sketch_directory
 
     Assembly   N50    N90    Contigs Length  Mean_Distance Path                    Score
     SRR1645597 226490 55522  55      4803421 4.611227e-04  fasta/SRR1645597.fasta  4.911708e+08
@@ -58,7 +58,7 @@ To print the table of assemblies sorted by mean mash distance::
 To print the table of assemblies sorted by the N50/Mean_Distance ratio score::
 
     # Choose the top 10 from a collection of 900 assemblies
-    refchooser metrics --top 10 assembly_paths.txt sketches
+    refchooser metrics --top 10 assembly_paths.txt sketch_directory
 
     Assembly   N50    N90    Contigs Length  Mean_Distance Path                    Score
     SRR7439240 774109 146629 34      4814374 4.658887e-04  fasta/SRR7439240.fasta  1.661575e+09
