@@ -158,12 +158,20 @@ def get_file_list(container):
                     logging.warning("No assembly found at %s" % line)
                 for path in glob_paths:
                     paths.append(path)
-        return sorted(set(paths))
-
-    if os.path.isdir(container):
+        paths = sorted(set(paths))
+    elif os.path.isdir(container):
         paths = os.listdir(container)
         paths = [os.path.join(container, file) for file in paths]
-        return sorted(paths)
+        paths = sorted(paths)
+    else:
+        logging.error("%s is neither a directory, nor a file containing paths to other files." % container)
+        return []
 
-    logging.error("%s is neither a directory, nor a file containing paths to other files." % container)
-    return paths
+    # Discard empty files
+    good_paths = []
+    for path in paths:
+        if os.stat(path).st_size == 0:
+            logging.warning("Ignoring empty file: %s" % path)
+        else:
+            good_paths.append(path)
+    return good_paths

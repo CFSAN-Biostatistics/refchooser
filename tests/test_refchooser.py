@@ -219,3 +219,26 @@ def test_metrics(tmpdir, capsys):
     assert re.match(match0, lines[0])
     assert re.match(match1, lines[1])
     assert re.match(match2, lines[2])
+
+
+def test_metrics_empty_fasta(tmpdir, capsys):
+    """Verify empty fasta file is ignored and refchooser does not crash."""
+    fasta_dir = str(tmpdir.mkdir("fastadir"))
+    sketch_dir = str(tmpdir.mkdir("sketchdir"))
+    seq_strings1 = ["A" * 50, "C" * 100, "G" * 150, "T" * 200]
+    seq_strings2 = ["A" * 50, "C" * 100, "G" * 150, "T" * 200, "A" * 50, "C" * 100, "G" * 150, "T" * 200]
+    seq_strings3 = []  # empty
+    write_fasta(seq_strings1, fasta_dir, "file1.fasta")
+    write_fasta(seq_strings2, fasta_dir, "file2.fasta")
+    write_fasta(seq_strings3, fasta_dir, "file3.fasta")
+    sketch_size = 1000
+    top_n = 10
+    refchooser.metrics(fasta_dir, sketch_dir, sketch_size, top_n, sort_by="Assembly")
+    captured = capsys.readouterr()
+    lines = captured.out.split('\n')
+    match0 = r"Assembly\s+N50\s+N90\s+Contigs\s+Length\s+Mean_Distance\s+Path\s+Score"
+    match1 = r"file1\s+150\s+100\s+4\s+500"
+    match2 = r"file2\s+150\s+100\s+8\s+1000"
+    assert re.match(match0, lines[0])
+    assert re.match(match1, lines[1])
+    assert re.match(match2, lines[2])

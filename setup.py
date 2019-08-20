@@ -26,7 +26,7 @@ test_requirements = [
 
 setup(
     name='refchooser',
-    version='0.2.0',
+    version='0.2.1',
     description="Tools to help choosing a reference assembly.",
     long_description=readme + '\n\n' + history,
     author="Steve Davis",
